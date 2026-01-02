@@ -1,53 +1,29 @@
 import React, { useState } from 'react';
 
 interface LinkedInSectionProps {
-    onAnalyze: (text: string) => void;
+    onAnalyze: (text: string, type: 'linkedin' | 'github') => void;
     isLoading: boolean;
 }
 
-// Mock function to simulate API fetch
-const mockFetchLinkedInProfile = async (url: string): Promise<string> => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(`Perfil Importado de LinkedIn:
-            
-Experiencia:
-- Senior Full Stack Developer (5 años) en TechCorp. Stack: React, Node.js, AWS.
-- Backend Developer (2 años) en StartUp Inc. Stack: Python, Django.
-
-Educación:
-- Ingeniería de Sistemas, Universidad Nacional.
-- Certificación AWS Solutions Architect.
-
-Habilidades:
-- JavaScript, TypeScript, Python, SQL, Docker, Kubernetes.
-`);
-        }, 1500);
-    });
-};
-
 const LinkedInSection: React.FC<LinkedInSectionProps> = ({ onAnalyze, isLoading }) => {
+    const [activeTab, setActiveTab] = useState<'linkedin' | 'github'>('linkedin');
     const [profileText, setProfileText] = useState('');
     const [isOpen, setIsOpen] = useState(false);
-    const [importUrl, setImportUrl] = useState('');
-    const [isImporting, setIsImporting] = useState(false);
 
     const handleSubmit = () => {
         if (profileText.trim().length > 20) {
-            onAnalyze(profileText);
+            onAnalyze(profileText, activeTab);
         }
     };
 
-    const handleImport = async () => {
-        if (!importUrl) return;
-        setIsImporting(true);
-        try {
-            // Simulate API Call
-            const data = await mockFetchLinkedInProfile(importUrl);
-            setProfileText(data);
-        } finally {
-            setIsImporting(false);
-        }
+    const placeholders = {
+        linkedin: "Ejemplo: \n\nAcerca de:\nDesarrollador Senior con 6 años de experiencia en arquitectura de microservicios...\n\nExperiencia:\n- Tech Lead en Startup X (2023-Presente): Lideré migración a AWS...",
+        github: "Ejemplo (Pega tu README.md principal aquí):\n\n# Portfolio de Juan Dev\n\n## Proyectos Destacados\n1. E-commerce API: Node.js + GraphQL.\n2. Open Source Contrib: Corrección de bugs en biblioteca React-Query..."
+    };
+
+    const tooltips = {
+        linkedin: "Ve a tu perfil de LinkedIn > 'Más' > 'Guardar en PDF' o simplemente selecciona y copia todo el texto de tu sección 'Acerca de', 'Experiencia' y 'Educación'. Entre más detalles técnicos, mejor la estimación.",
+        github: "Copia el contenido de tu README.md personal (el que sale en tu perfil) o la descripción de tus repositorios más importantes. La IA buscará calidad de código, complejidad de proyectos y stack tecnológico."
     };
 
     return (
@@ -57,8 +33,8 @@ const LinkedInSection: React.FC<LinkedInSectionProps> = ({ onAnalyze, isLoading 
                 className="w-full flex items-center justify-between group"
             >
                 <h3 className="text-lg font-black uppercase flex items-center gap-3">
-                    <i className="fa-brands fa-linkedin text-3xl"></i>
-                    IMPORTAR PERFIL
+                    <i className="fa-solid fa-id-card text-3xl"></i>
+                    ANALIZADOR DE PERFIL 360°
                 </h3>
                 <div className={`border-2 border-black p-1 transition-transform ${isOpen ? 'rotate-180 bg-black text-white' : 'bg-white text-black'}`}>
                     <i className="fa-solid fa-chevron-down"></i>
@@ -68,35 +44,49 @@ const LinkedInSection: React.FC<LinkedInSectionProps> = ({ onAnalyze, isLoading 
             {isOpen && (
                 <div className="mt-6 animate-fadeIn space-y-6">
                     
-                    {/* API Import Simulation Section */}
-                    <div className="border-2 border-black bg-gray-50 p-4">
-                        <label className="block text-xs font-bold uppercase mb-2">LinkedIn Profile URL (API Integration)</label>
-                        <div className="flex gap-2">
-                            <input 
-                                type="text" 
-                                className="brutal-input w-full p-2 font-mono text-sm"
-                                placeholder="https://linkedin.com/in/usuario"
-                                value={importUrl}
-                                onChange={(e) => setImportUrl(e.target.value)}
-                            />
-                            <button 
-                                onClick={handleImport}
-                                disabled={isImporting}
-                                className="brutal-btn px-4 py-2 font-bold text-xs uppercase bg-neon-blue text-white disabled:opacity-50 disabled:shadow-none"
-                            >
-                                {isImporting ? 'Cargando...' : 'Importar'}
-                            </button>
-                        </div>
-                        <p className="text-[10px] mt-1 text-gray-500 font-mono">* Simulación de integración API OAuth 2.0</p>
+                    {/* Tabs */}
+                    <div className="flex gap-4 border-b-2 border-black pb-1">
+                        <button 
+                            onClick={() => { setActiveTab('linkedin'); setProfileText(''); }}
+                            className={`flex items-center gap-2 px-4 py-2 font-black uppercase text-xs transition-all
+                                ${activeTab === 'linkedin' 
+                                    ? 'bg-neon-blue text-white border-2 border-black transform -translate-y-1 shadow-hard-sm' 
+                                    : 'text-gray-500 hover:text-black'}`}
+                        >
+                            <i className="fa-brands fa-linkedin text-lg"></i> LinkedIn
+                        </button>
+                        <button 
+                            onClick={() => { setActiveTab('github'); setProfileText(''); }}
+                            className={`flex items-center gap-2 px-4 py-2 font-black uppercase text-xs transition-all
+                                ${activeTab === 'github' 
+                                    ? 'bg-black text-white border-2 border-gray-800 transform -translate-y-1 shadow-hard-sm' 
+                                    : 'text-gray-500 hover:text-black'}`}
+                        >
+                            <i className="fa-brands fa-github text-lg"></i> GitHub
+                        </button>
                     </div>
 
                     <div className="relative">
-                        <div className="absolute -top-3 left-4 bg-white px-2 border-2 border-black text-[10px] font-bold uppercase">
-                            Datos del Perfil
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="text-xs font-bold uppercase block">
+                                {activeTab === 'linkedin' ? 'Pega tu Info Profesional' : 'Pega tu README / Proyectos'}
+                            </label>
+                            
+                            {/* Tooltip Component */}
+                            <div className="relative tooltip-container cursor-help">
+                                <div className="bg-neon-yellow border-2 border-black rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs">
+                                    ?
+                                </div>
+                                <div className="tooltip-text absolute right-0 bottom-full mb-2 w-64 bg-black text-white text-[10px] p-3 border-2 border-neon-green shadow-hard z-10 font-mono">
+                                    {tooltips[activeTab]}
+                                    <div className="absolute bottom-[-6px] right-2 w-3 h-3 bg-black border-r-2 border-b-2 border-neon-green transform rotate-45"></div>
+                                </div>
+                            </div>
                         </div>
+
                         <textarea
-                            className="w-full p-4 bg-white border-2 border-black text-xs font-mono text-slate-700 focus:outline-none focus:shadow-hard min-h-[150px]"
-                            placeholder="O pega tu experiencia manualmente aquí..."
+                            className="w-full p-4 bg-white border-2 border-black text-xs font-mono text-slate-700 focus:outline-none focus:shadow-hard min-h-[200px]"
+                            placeholder={placeholders[activeTab]}
                             value={profileText}
                             onChange={(e) => setProfileText(e.target.value)}
                         ></textarea>
@@ -111,8 +101,8 @@ const LinkedInSection: React.FC<LinkedInSectionProps> = ({ onAnalyze, isLoading 
                                     ? 'bg-gray-300 cursor-not-allowed shadow-none border-gray-400' 
                                     : 'bg-neon-green hover:bg-lime-400'}`}
                         >
-                            {isLoading ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-bolt"></i>}
-                            ANALIZAR CON IA
+                            {isLoading ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-wand-magic-sparkles"></i>}
+                            {activeTab === 'linkedin' ? 'Auditar Perfil LinkedIn' : 'Auditar GitHub Repo'}
                         </button>
                     </div>
                 </div>

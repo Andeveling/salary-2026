@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { calculateSalary, ArlLevel, formatCurrency, CalculationResult, SMMLV_2026, AUX_TRANSP_2026, CalculatorOptions, defaultOptions } from './utils/salary';
 import ResultCard from './components/ResultCard';
 import LinkedInSection from './components/LinkedInSection';
-import { generateAnalysis, generateCounterOffer, checkMarket, analyzeLinkedInProfile } from './services/gemini';
+import { generateAnalysis, generateCounterOffer, checkMarket, analyzeProfile } from './services/gemini';
 
 const App: React.FC = () => {
     // State
@@ -61,24 +62,24 @@ const App: React.FC = () => {
             }
             setAiResponse(text);
         } catch (e) {
-            setAiResponse("Hubo un error conectando con Gemini. Por favor intenta de nuevo.");
+            setAiResponse("**Error:** Hubo un problema conectando con Gemini AI. Intenta de nuevo.");
             console.error(e);
         } finally {
             setAiLoading(null);
         }
     };
 
-    const handleLinkedInAnalysis = async (profileText: string) => {
+    const handleProfileAnalysis = async (text: string, type: 'linkedin' | 'github') => {
         if (!result) return;
         setAiLoading('linkedin');
         setAiResponse(null);
         setAiSources([]);
         
         try {
-            const text = await analyzeLinkedInProfile(profileText, amount);
-            setAiResponse(text);
+            const responseText = await analyzeProfile(text, type, amount);
+            setAiResponse(responseText);
         } catch (e) {
-            setAiResponse("Error analizando el perfil.");
+            setAiResponse("**Error:** No se pudo analizar el perfil.");
             console.error(e);
         } finally {
             setAiLoading(null);
@@ -217,7 +218,7 @@ const App: React.FC = () => {
                         </div>
 
                          <LinkedInSection 
-                            onAnalyze={handleLinkedInAnalysis} 
+                            onAnalyze={handleProfileAnalysis} 
                             isLoading={aiLoading === 'linkedin'}
                         />
                     </div>
@@ -225,7 +226,7 @@ const App: React.FC = () => {
                     {/* Right Panel: Results */}
                     <div className="lg:col-span-8 space-y-8">
                         
-                        {/* AI Output Area */}
+                        {/* AI Output Area with ReactMarkdown */}
                         {aiResponse && (
                             <div className="bg-white border-2 border-black shadow-hard overflow-hidden animate-fadeIn mb-8 relative">
                                 <div className="bg-neon-purple border-b-2 border-black px-4 py-2 flex justify-between items-center">
@@ -236,12 +237,12 @@ const App: React.FC = () => {
                                         [ Cerrar ]
                                     </button>
                                 </div>
-                                <div className="p-6 text-sm font-mono leading-relaxed whitespace-pre-wrap bg-white">
-                                    {aiResponse}
+                                <div className="p-6 bg-white markdown-body text-sm font-mono">
+                                    <ReactMarkdown>{aiResponse}</ReactMarkdown>
                                 </div>
                                 {aiSources.length > 0 && (
                                     <div className="bg-gray-100 px-6 py-3 border-t-2 border-black">
-                                        <p className="text-[10px] font-black uppercase mb-2">Sources:</p>
+                                        <p className="text-[10px] font-black uppercase mb-2">Fuentes / Referencias:</p>
                                         <div className="flex flex-wrap gap-2">
                                             {aiSources.map((source, i) => (
                                                 <a key={i} href={source.uri} target="_blank" rel="noreferrer" className="text-[10px] text-black font-bold uppercase hover:bg-black hover:text-white border-2 border-black px-2 py-1 transition-colors">

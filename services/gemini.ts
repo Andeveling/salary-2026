@@ -13,19 +13,24 @@ export const generateAnalysis = async (
     target: number
 ): Promise<string> => {
     const ai = getClient();
-    const prompt = `Actúa como un experto en finanzas laborales de Colombia (2026). Analiza esta oferta de $${grossAmount.toLocaleString('es-CO')} COP (monto bruto mensual).
-    Datos calculados:
-    - Si fuera nómina: Recibe neto mensual de $${netNomina.toLocaleString('es-CO')}.
-    - Si fuera prestación de servicios: Recibe neto mensual de $${netPrestacion.toLocaleString('es-CO')}.
-    - El punto de equilibrio (honorario objetivo para igualar nómina) es de $${target.toLocaleString('es-CO')}.
+    const prompt = `Actúa como un Headhunter Senior experto en el mercado IT de Colombia/Latam para 2026. Sé brutalmente honesto y realista.
     
-    ¿Es una oferta competitiva para un rol IT/Tech en 2026? Da una respuesta concisa con pros y contras.`;
+    Analiza esta oferta:
+    - Oferta Bruta: $${grossAmount.toLocaleString('es-CO')}
+    - Neto Aprox (Nómina): $${netNomina.toLocaleString('es-CO')}
+    - Neto Aprox (Prestación): $${netPrestacion.toLocaleString('es-CO')}
+    - Honorario de Equilibrio: $${target.toLocaleString('es-CO')}
+    
+    Responde en Markdown:
+    1. **Veredicto Realista:** ¿Es un salario competitivo, bajo o alto para el mercado actual?
+    2. **Lo bueno y lo malo:** Pros y contras financieros directos.
+    3. **Consejo de Negociación:** ¿Qué debería pedir el candidato?`;
 
     const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
-            systemInstruction: "Eres un consultor experto en salarios y leyes laborales de Colombia especializado en la industria tech.",
+            systemInstruction: "Eres un consultor financiero agresivo pero útil.",
         }
     });
 
@@ -37,16 +42,15 @@ export const generateCounterOffer = async (
     target: number
 ): Promise<string> => {
     const ai = getClient();
-    const prompt = `Redacta una contraoferta profesional y persuasiva para un desarrollador de software que recibió una oferta de $${grossAmount.toLocaleString('es-CO')} COP por Prestación de Servicios.
-    Utiliza el argumento de que para igualar los beneficios de nómina, el honorario objetivo debería ser cercano a $${target.toLocaleString('es-CO')}.
-    Menciona la carga de seguridad social y la falta de primas/cesantías. Tono: respetuoso y negociador.`;
+    const prompt = `Escribe un correo de contraoferta para un puesto Tech.
+    Oferta actual: $${grossAmount.toLocaleString('es-CO')} (Prestación de Servicios).
+    Meta: Llegar a $${target.toLocaleString('es-CO')} o conseguir modalidad Nómina.
+    
+    Usa un tono profesional, firme pero cortés. Argumenta con la carga prestacional e impuestos (seguridad social completa a cargo del contratista).`;
 
     const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: {
-            systemInstruction: "Eres un coach de negociación salarial.",
-        }
+        contents: prompt
     });
 
     return response.text || "No se pudo generar la contraoferta.";
@@ -54,15 +58,14 @@ export const generateCounterOffer = async (
 
 export const checkMarket = async (role: string = "Desarrollador Software"): Promise<{ text: string, sources: Array<{title: string, uri: string}> }> => {
     const ai = getClient();
-    
     const tools: Tool[] = [{ googleSearch: {} }];
 
     const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Busca salarios actualizados en Colombia para el rol: ${role} en el año 2025-2026. Compara Junior, Mid y Senior.`,
+        contents: `Busca rangos salariales REALES en Colombia 2025-2026 para: ${role}. Diferencia entre Junior, Mid, Senior y Lead.
+        Dame cifras en millones de COP.`,
         config: {
-            tools: tools,
-            systemInstruction: "Responde con datos concretos del mercado laboral colombiano en pesos (COP).",
+            tools: tools
         }
     });
 
@@ -70,7 +73,7 @@ export const checkMarket = async (role: string = "Desarrollador Software"): Prom
     const sources = groundingChunks
         .map(chunk => chunk.web)
         .filter(web => web !== undefined && web !== null)
-        .map(web => ({ title: web.title || 'Fuente', uri: web.uri || '#' }));
+        .map(web => ({ title: web.title || 'Fuente Externa', uri: web.uri || '#' }));
 
     return {
         text: response.text || "No se pudo consultar el mercado.",
@@ -78,29 +81,52 @@ export const checkMarket = async (role: string = "Desarrollador Software"): Prom
     };
 };
 
-export const analyzeLinkedInProfile = async (
-    profileText: string,
+export const analyzeProfile = async (
+    text: string,
+    type: 'linkedin' | 'github',
     targetSalary: number
 ): Promise<string> => {
     const ai = getClient();
-    const prompt = `Analiza el siguiente perfil profesional (extraído de LinkedIn/CV) para una aspiración salarial de $${targetSalary.toLocaleString('es-CO')} COP mensuales en Colombia (Mercado 2026).
     
-    Perfil:
+    let promptContext = "";
+    if (type === 'linkedin') {
+        promptContext = "Analizas un perfil de LinkedIn (Experiencia, About, Skills).";
+    } else {
+        promptContext = "Analizas un README de GitHub o descripción de proyectos Open Source.";
+    }
+
+    const prompt = `
+    ${promptContext}
+    Aspiración Salarial: $${targetSalary.toLocaleString('es-CO')} COP / mes.
+    Mercado: Tecnología Colombia/Remoto Latam 2026.
+
+    Texto del Perfil:
     """
-    ${profileText.substring(0, 5000)}
+    ${text.substring(0, 8000)}
     """
+
+    Actúa como un Tech Recruiter de alto nivel y entrégame un reporte en Markdown estricto con estas secciones:
+
+    ### 1. 💰 Reality Check Salarial
+    ¿El perfil justifica los $${targetSalary.toLocaleString('es-CO')}? Sé realista. Si falta experiencia, dilo. Si es bajo, dilo.
+
+    ### 2. 🔍 Hacks de Búsqueda (Boolean Strings)
+    Genera 2 "Boolean Search Strings" complejas y efectivas que este candidato debería pegar en el buscador de LinkedIn Jobs para encontrar ofertas ocultas que paguen lo que pide.
+    Ejemplo: (React OR Vue) AND (Senior) AND ...
     
-    Genera 3 secciones cortas:
-    1. 🟢 **Fortalezas:** Qué justifica ese salario.
-    2. 🔴 **Brechas:** Qué falta para asegurar ese salario o pedir más.
-    3. 💡 **Recomendación de Perfil:** Qué keywords o logros agregar al perfil de LinkedIn para atraer reclutadores con ese presupuesto.
+    ### 3. 🚀 Estrategia Open Source
+    Recomienda 2 tipos de proyectos o repositorios específicos (temáticas) donde debería contribuir este perfil para aumentar su valor de mercado. (Ej: "Crea una librería de npm para...", "Contribuye a docs de X framework").
+
+    ### 4. ⚡ Optimización de Perfil
+    - **Keywords faltantes:** Qué palabras clave busca el ATS que no están aquí.
+    - **Mejora rápida:** Un cambio concreto en su redacción o estructura.
     `;
 
     const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
-            systemInstruction: "Eres un reclutador experto IT headhunter.",
+            systemInstruction: "Eres un coach de carrera técnica muy pragmático. Usas formato Markdown con listas, negritas y bloques de código.",
         }
     });
 
