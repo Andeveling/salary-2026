@@ -79,13 +79,13 @@ const LinkedInSection: React.FC<LinkedInSectionProps> = ({ onAnalyze, isLoading 
                                 </div>
                                 <div className="tooltip-text absolute right-0 bottom-full mb-2 w-64 bg-black text-white text-[10px] p-3 border-2 border-neon-green shadow-hard z-10 font-mono">
                                     {tooltips[activeTab]}
-                                    <div className="absolute bottom-[-6px] right-2 w-3 h-3 bg-black border-r-2 border-b-2 border-neon-green transform rotate-45"></div>
+                                    <div className="absolute -bottom-1.5 right-2 w-3 h-3 bg-black border-r-2 border-b-2 border-neon-green transform rotate-45"></div>
                                 </div>
                             </div>
                         </div>
 
                         <textarea
-                            className="w-full p-4 bg-white border-2 border-black text-xs font-mono text-slate-700 focus:outline-none focus:shadow-hard min-h-[200px]"
+                            className="w-full p-4 bg-white border-2 border-black text-xs font-mono text-slate-700 focus:outline-none focus:shadow-hard min-h-50"
                             placeholder={placeholders[activeTab]}
                             value={profileText}
                             onChange={(e) => setProfileText(e.target.value)}

@@ -23,7 +23,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ title, icon, themeColor, netMon
                 <i className={`fa-solid ${icon} text-2xl`}></i>
             </div>
             
-            <div className="p-6 flex-grow space-y-6">
+            <div className="p-6 grow space-y-6">
                 <div className="text-center pb-6 border-b-2 border-black border-dashed">
                     <span className="text-xs font-bold uppercase bg-black text-white px-2 py-1">Neto Mensual</span>
                     <div className="text-4xl font-black mt-4 font-mono tracking-tight">{netMonthly}</div>

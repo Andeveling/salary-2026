@@ -4,6 +4,7 @@ import { calculateSalary, ArlLevel, formatCurrency, CalculationResult, SMMLV_202
 import ResultCard from './components/ResultCard';
 import LinkedInSection from './components/LinkedInSection';
 import { generateAnalysis, generateCounterOffer, checkMarket, analyzeProfile } from './services/gemini';
+import './globals.css';
 
 const App: React.FC = () => {
     // State
