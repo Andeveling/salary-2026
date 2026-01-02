@@ -1,7 +1,8 @@
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import LinkedInSection from "./components/LinkedInSection";
+import AuthorCard from "./components/AuthorCard";
+import FinancialPlan from "./components/FinancialPlan";
+import PromptLibrary from "./components/PromptLibrary";
 import ResultCard from "./components/ResultCard";
 import {
 	ArlLevel,
@@ -10,12 +11,6 @@ import {
 	defaultOptions,
 	SMMLV_2026,
 } from "./config/config";
-import {
-	analyzeProfile,
-	checkMarket,
-	generateAnalysis,
-	generateCounterOffer,
-} from "./services/gemini";
 import {
 	type CalculationResult,
 	calculateSalary,
@@ -29,13 +24,6 @@ const App: React.FC = () => {
 	const [result, setResult] = useState<CalculationResult | null>(null);
 	const [options, setOptions] = useState<CalculatorOptions>(defaultOptions);
 	const [showSettings, setShowSettings] = useState(false);
-
-	// AI State
-	const [aiLoading, setAiLoading] = useState<string | null>(null);
-	const [aiResponse, setAiResponse] = useState<string | null>(null);
-	const [aiSources, setAiSources] = useState<
-		Array<{ title: string; uri: string }>
-	>([]);
 
 	const handleCalculate = useCallback(() => {
 		const res = calculateSalary(amount, options);
@@ -61,60 +49,6 @@ const App: React.FC = () => {
 		}));
 	};
 
-	// AI Actions
-	const handleAiAction = async (action: "analyze" | "draft" | "market") => {
-		if (!result) return;
-		setAiLoading(action);
-		setAiResponse(null);
-		setAiSources([]);
-
-		try {
-			let text = "";
-			if (action === "analyze") {
-				text = await generateAnalysis(
-					amount,
-					result.nomina.netMonthly,
-					result.prestacion.netMonthly,
-					result.targetHonorario,
-				);
-			} else if (action === "draft") {
-				text = await generateCounterOffer(amount, result.targetHonorario);
-			} else if (action === "market") {
-				const res = await checkMarket();
-				text = res.text;
-				setAiSources(res.sources);
-			}
-			setAiResponse(text);
-		} catch (e) {
-			setAiResponse(
-				"**Error:** Hubo un problema conectando con Gemini AI. Intenta de nuevo.",
-			);
-			console.error(e);
-		} finally {
-			setAiLoading(null);
-		}
-	};
-
-	const handleProfileAnalysis = async (
-		text: string,
-		type: "linkedin" | "github",
-	) => {
-		if (!result) return;
-		setAiLoading("linkedin");
-		setAiResponse(null);
-		setAiSources([]);
-
-		try {
-			const responseText = await analyzeProfile(text, type, amount);
-			setAiResponse(responseText);
-		} catch (e) {
-			setAiResponse("**Error:** No se pudo analizar el perfil.");
-			console.error(e);
-		} finally {
-			setAiLoading(null);
-		}
-	};
-
 	return (
 		<div className="min-h-screen p-4 md:p-8 font-mono text-black">
 			<div className="max-w-7xl mx-auto">
@@ -132,7 +66,7 @@ const App: React.FC = () => {
 						</div>
 						<div className="flex gap-4">
 							<div className="bg-white px-4 py-2 border-2 border-black shadow-hard-sm">
-								<span className="block text-[10px] uppercase font-bold">
+								<span className="block text-base uppercase font-bold">
 									SMMLV 2026
 								</span>
 								<span className="font-black text-lg">
@@ -140,7 +74,7 @@ const App: React.FC = () => {
 								</span>
 							</div>
 							<div className="bg-white px-4 py-2 border-2 border-black shadow-hard-sm">
-								<span className="block text-[10px] uppercase font-bold">
+								<span className="block text-base uppercase font-bold">
 									Aux. Transp
 								</span>
 								<span className="font-black text-lg">
@@ -151,12 +85,11 @@ const App: React.FC = () => {
 					</div>
 				</header>
 
-				<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 					{/* Left Panel: Inputs & Config */}
-					<div className="lg:col-span-4 space-y-8">
-						{/* Main Input */}
-						<div className="bg-white border-2 border-black shadow-hard p-6 relative">
-							<div className="absolute -top-3 -right-3 bg-neon-purple text-white px-3 py-1 border-2 border-black font-black text-xs uppercase transform rotate-3">
+					<div className="lg:col-span-1 md:row-span-2 lg:row-span-2 flex flex-col gap-8 h-full">
+						<div className="bg-white border-2 border-black shadow-hard p-6 relative grow flex flex-col">
+							<div className="absolute -top-3 -right-3 bg-neon-purple text-white px-3 py-1 border-2 border-black font-black text-lg uppercase transform rotate-3">
 								Input Principal
 							</div>
 
@@ -186,12 +119,12 @@ const App: React.FC = () => {
 								className={`w-full brutal-btn py-2 px-4 flex items-center justify-between font-bold uppercase text-xs ${showSettings ? "bg-black text-white" : "bg-white"}`}
 							>
 								<span>
-									<i className="fa-solid fa-sliders mr-2"></i> Configuración
-									Avanzada
+									<i className="fa-solid fa-sliders mr-2" />
+									Configuración Avanzada
 								</span>
 								<i
 									className={`fa-solid fa-chevron-down transition-transform ${showSettings ? "rotate-180" : ""}`}
-								></i>
+								/>
 							</button>
 
 							{/* Settings Panel */}
@@ -275,212 +208,137 @@ const App: React.FC = () => {
 								</div>
 							)}
 						</div>
+						<AuthorCard />
+					</div>
 
-						{/* AI Tools */}
-						<div className="bg-white border-2 border-black shadow-hard p-6">
-							<h3 className="text-sm font-black uppercase mb-4 flex items-center gap-2">
-								<i className="fa-solid fa-microchip text-neon-purple"></i>
-								AI_AGENTS
-							</h3>
-
-							<div className="space-y-4">
-								<button
-									type="button"
-									onClick={() => handleAiAction("analyze")}
-									disabled={!!aiLoading}
-									className="w-full brutal-btn py-4 px-4 font-bold text-xs uppercase flex items-center justify-between group hover:bg-neon-yellow"
-								>
-									<span>Analizar Oferta</span>
-									{aiLoading === "analyze" ? (
-										<i className="fa-solid fa-spinner fa-spin"></i>
-									) : (
-										<i className="fa-solid fa-magnifying-glass-chart"></i>
-									)}
-								</button>
-								<button
-									type="button"
-									onClick={() => handleAiAction("draft")}
-									disabled={!!aiLoading}
-									className="w-full brutal-btn py-4 px-4 font-bold text-xs uppercase flex items-center justify-between group hover:bg-neon-green"
-								>
-									<span>Redactar Contraoferta</span>
-									{aiLoading === "draft" ? (
-										<i className="fa-solid fa-spinner fa-spin"></i>
-									) : (
-										<i className="fa-solid fa-pen-nib"></i>
-									)}
-								</button>
-								<button
-									type="button"
-									onClick={() => handleAiAction("market")}
-									disabled={!!aiLoading}
-									className="w-full brutal-btn py-4 px-4 font-bold text-xs uppercase flex items-center justify-between group hover:bg-neon-blue text-black"
-								>
-									<span>Consultar Mercado</span>
-									{aiLoading === "market" ? (
-										<i className="fa-solid fa-spinner fa-spin"></i>
-									) : (
-										<i className="fa-solid fa-earth-americas"></i>
-									)}
-								</button>
+					{/* Results */}
+					{result && (
+						<>
+							<div className="col-span-1 row-span-2">
+								<ResultCard
+									title="NÓMINA"
+									icon="fa-briefcase"
+									themeColor="nomina"
+									netMonthly={formatCurrency(result.nomina.netMonthly)}
+									annualTotal={formatCurrency(result.nomina.totalAnnual)}
+									details={[
+										{
+											label: "Salud (4%)",
+											value: `-${formatCurrency(result.nomina.salud)}`,
+											isDeduction: true,
+										},
+										{
+											label: "Pensión (4%)",
+											value: `-${formatCurrency(result.nomina.pension)}`,
+											isDeduction: true,
+										},
+										{
+											label: "FSP",
+											value:
+												result.nomina.fsp > 0
+													? `-${formatCurrency(result.nomina.fsp)}`
+													: "$0",
+											isDeduction: result.nomina.fsp > 0,
+										},
+										{
+											label: "Primas",
+											value: `+${formatCurrency(result.nomina.prima)}`,
+											isBonus: true,
+										},
+										{
+											label: "Cesantías + Int.",
+											value: `+${formatCurrency(result.nomina.cesantias + result.nomina.interesesCesantias)}`,
+											isBonus: true,
+										},
+									]}
+								/>
 							</div>
-						</div>
+							<div className="col-span-1 row-span-2">
+								<ResultCard
+									title="P. SERVICIOS"
+									icon="fa-file-invoice-dollar"
+									themeColor="honorarios"
+									netMonthly={formatCurrency(result.prestacion.netMonthly)}
+									annualTotal={formatCurrency(result.prestacion.totalAnnual)}
+									details={[
+										{
+											label: `Salud (${options.prestacion.healthRate * 100}%)`,
+											value: `-${formatCurrency(result.prestacion.salud)}`,
+											isDeduction: true,
+										},
+										{
+											label: `Pensión (${options.prestacion.pensionRate * 100}%)`,
+											value: `-${formatCurrency(result.prestacion.pension)}`,
+											isDeduction: true,
+										},
+										{
+											label: "ARL + FSP",
+											value: `-${formatCurrency(result.prestacion.arl + result.prestacion.fsp)}`,
+											isDeduction: true,
+										},
+										{
+											label: "ReteFuente",
+											value: `-${formatCurrency(result.prestacion.reteFuente)}`,
+											isDeduction: true,
+										},
+										{
+											label: "Base IBC",
+											value: `${formatCurrency(result.prestacion.ibcBase)}`,
+											isDeduction: false,
+										},
+									]}
+								/>
+							</div>
 
-						<LinkedInSection
-							onAnalyze={handleProfileAnalysis}
-							isLoading={aiLoading === "linkedin"}
+							{/* Verdict Banner */}
+							<div className="md:col-span-3 bg-black border-2 border-white shadow-hard-lg p-8 text-white relative flex flex-col justify-center">
+								<div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+									<div className="text-center md:text-left">
+										<h3 className="text-neon-green font-black uppercase tracking-widest text-sm mb-2">
+											Veredicto_Final
+										</h3>
+										<p className="text-xl md:text-2xl font-display uppercase leading-none">
+											Para igualar la nómina de{" "}
+											<span className="text-neon-blue">
+												{formatCurrency(amount)}
+											</span>
+											, cobra:
+										</p>
+									</div>
+									<div className="bg-white border-4 border-neon-purple p-4 transform rotate-2 min-w-60 text-center shadow-[4px_4px_0px_0px_#D946EF]">
+										<span className="block text-[10px] text-black uppercase font-black mb-1">
+											Honorario Objetivo
+										</span>
+										<span className="text-3xl font-black text-black font-mono">
+											{formatCurrency(result.targetHonorario)}
+										</span>
+									</div>
+								</div>
+								{/* Decoration */}
+								<div className="absolute top-0 right-0 w-16 h-16 bg-neon-green border-l-2 border-b-2 border-black" />
+							</div>
+						</>
+					)}
+
+
+					{/* Biblioteca de Prompts Estáticos */}
+					<div className="col-span-full">
+						<PromptLibrary
+							defaultSalary={amount}
+							defaultNetoNomina={result?.nomina.netMonthly || 0}
+							defaultNetoPrestacion={result?.prestacion.netMonthly || 0}
+							defaultHonorarioEquilibrio={result?.targetHonorario || 0}
 						/>
 					</div>
 
-					{/* Right Panel: Results */}
-					<div className="lg:col-span-8 space-y-8">
-						{/* AI Output Area with ReactMarkdown */}
-						{aiResponse && (
-							<div className="bg-white border-2 border-black shadow-hard overflow-hidden animate-fadeIn mb-8 relative">
-								<div className="bg-neon-purple border-b-2 border-black px-4 py-2 flex justify-between items-center">
-									<span className="text-xs font-black text-white uppercase flex items-center gap-2">
-										<i className="fa-solid fa-terminal"></i> Gemini_Output_v1.0
-									</span>
-									<button
-										type="button"
-										onClick={() => setAiResponse(null)}
-										className="text-white hover:text-black font-bold uppercase text-xs border-2 border-transparent hover:border-black px-1"
-									>
-										[ Cerrar ]
-									</button>
-								</div>
-								<div className="p-6 bg-white markdown-body text-sm font-mono">
-									<ReactMarkdown>{aiResponse}</ReactMarkdown>
-								</div>
-								{aiSources.length > 0 && (
-									<div className="bg-gray-100 px-6 py-3 border-t-2 border-black">
-										<p className="text-[10px] font-black uppercase mb-2">
-											Fuentes / Referencias:
-										</p>
-										<div className="flex flex-wrap gap-2">
-											{aiSources.map((source, i) => (
-												<a
-													key={source.uri}
-													href={source.uri}
-													target="_blank"
-													rel="noreferrer"
-													className="text-[10px] text-black font-bold uppercase hover:bg-black hover:text-white border-2 border-black px-2 py-1 transition-colors"
-												>
-													LINK_{i + 1}: {source.title.substring(0, 15)}...
-												</a>
-											))}
-										</div>
-									</div>
-								)}
-							</div>
-						)}
 
-						{result && (
-							<>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-									<ResultCard
-										title="NÓMINA"
-										icon="fa-briefcase"
-										themeColor="nomina"
-										netMonthly={formatCurrency(result.nomina.netMonthly)}
-										annualTotal={formatCurrency(result.nomina.totalAnnual)}
-										details={[
-											{
-												label: "Salud (4%)",
-												value: `-${formatCurrency(result.nomina.salud)}`,
-												isDeduction: true,
-											},
-											{
-												label: "Pensión (4%)",
-												value: `-${formatCurrency(result.nomina.pension)}`,
-												isDeduction: true,
-											},
-											{
-												label: "FSP",
-												value:
-													result.nomina.fsp > 0
-														? `-${formatCurrency(result.nomina.fsp)}`
-														: "$0",
-												isDeduction: result.nomina.fsp > 0,
-											},
-											{
-												label: "Primas",
-												value: `+${formatCurrency(result.nomina.prima)}`,
-												isBonus: true,
-											},
-											{
-												label: "Cesantías + Int.",
-												value: `+${formatCurrency(result.nomina.cesantias + result.nomina.interesesCesantias)}`,
-												isBonus: true,
-											},
-										]}
-									/>
-									<ResultCard
-										title="P. SERVICIOS"
-										icon="fa-file-invoice-dollar"
-										themeColor="honorarios"
-										netMonthly={formatCurrency(result.prestacion.netMonthly)}
-										annualTotal={formatCurrency(result.prestacion.totalAnnual)}
-										details={[
-											{
-												label: `Salud (${options.prestacion.healthRate * 100}%)`,
-												value: `-${formatCurrency(result.prestacion.salud)}`,
-												isDeduction: true,
-											},
-											{
-												label: `Pensión (${options.prestacion.pensionRate * 100}%)`,
-												value: `-${formatCurrency(result.prestacion.pension)}`,
-												isDeduction: true,
-											},
-											{
-												label: "ARL + FSP",
-												value: `-${formatCurrency(result.prestacion.arl + result.prestacion.fsp)}`,
-												isDeduction: true,
-											},
-											{
-												label: "ReteFuente",
-												value: `-${formatCurrency(result.prestacion.reteFuente)}`,
-												isDeduction: true,
-											},
-											{
-												label: "Base IBC",
-												value: `${formatCurrency(result.prestacion.ibcBase)}`,
-												isDeduction: false,
-											},
-										]}
-									/>
-								</div>
+					{/* Financial Plan */}
+					{result && (
+						<div className="col-span-full">
+							<FinancialPlan netIncome={result.nomina.netMonthly} />
+						</div>
+					)}
 
-								{/* Verdict Banner */}
-								<div className="bg-black border-2 border-white shadow-hard-lg p-8 text-white relative mt-8">
-									<div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-										<div className="text-center md:text-left">
-											<h3 className="text-neon-green font-black uppercase tracking-widest text-sm mb-2">
-												Veredicto_Final
-											</h3>
-											<p className="text-xl md:text-2xl font-display uppercase leading-none">
-												Para igualar la nómina de{" "}
-												<span className="text-neon-blue">
-													{formatCurrency(amount)}
-												</span>
-												, cobra:
-											</p>
-										</div>
-										<div className="bg-white border-4 border-neon-purple p-4 transform rotate-2 min-w-60 text-center shadow-[4px_4px_0px_0px_#D946EF]">
-											<span className="block text-[10px] text-black uppercase font-black mb-1">
-												Honorario Objetivo
-											</span>
-											<span className="text-3xl font-black text-black font-mono">
-												{formatCurrency(result.targetHonorario)}
-											</span>
-										</div>
-									</div>
-									{/* Decoration */}
-									<div className="absolute top-0 right-0 w-16 h-16 bg-neon-green border-l-2 border-b-2 border-black"></div>
-								</div>
-							</>
-						)}
-					</div>
 				</div>
 			</div>
 		</div>

@@ -44,12 +44,12 @@ const ResultCard: React.FC<ResultCardProps> = ({
 					<span className="text-xs font-bold uppercase bg-black text-white px-2 py-1">
 						Neto Mensual
 					</span>
-					<div className="text-4xl font-black mt-4 font-mono tracking-tight">
+					<div className="text-5xl font-black mt-4 font-mono tracking-tight">
 						{netMonthly}
 					</div>
 				</div>
 
-				<div className="space-y-3 font-mono text-sm">
+				<div className="space-y-4 font-mono text-base">
 					{details.map((item) => (
 						<div
 							key={item.label}
@@ -82,10 +82,10 @@ const ResultCard: React.FC<ResultCardProps> = ({
 
 			<div className="bg-gray-100 p-4 border-t-2 border-black">
 				<div className="flex justify-between items-center">
-					<span className="text-xs font-black uppercase">
+					<span className="text-lg font-black uppercase">
 						Ingreso Real Anual
 					</span>
-					<span className="text-xl font-black font-mono text-right border-b-4 border-black leading-none">
+					<span className="text-2xl font-black font-mono text-right border-b-4 border-black leading-none">
 						{annualTotal}
 					</span>
 				</div>
