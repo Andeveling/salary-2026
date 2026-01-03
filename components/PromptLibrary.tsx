@@ -219,7 +219,7 @@ const PromptLibrary: React.FC<PromptLibraryProps> = ({
 							>
 								{/* Badge */}
 								<div
-									className={`absolute -top-2 -right-2 bg-${prompt.themeColor} border-2 border-black px-2 py-1 transform rotate-3`}
+									className={`absolute -top-6 -right-6 bg-${prompt.themeColor} border-2 border-black px-2 py-1 transform rotate-3`}
 								>
 									<span className="text-lg font-black uppercase">
 										~{prompt.estimatedTokens} tokens

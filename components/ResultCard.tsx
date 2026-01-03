@@ -44,7 +44,7 @@ const ResultCard: React.FC<ResultCardProps> = ({
 					<span className="text-xs font-bold uppercase bg-black text-white px-2 py-1">
 						Neto Mensual
 					</span>
-					<div className="text-5xl font-black mt-4 font-mono tracking-tight">
+					<div className="text-4xl font-black mt-4 font-mono tracking-tight">
 						{netMonthly}
 					</div>
 				</div>

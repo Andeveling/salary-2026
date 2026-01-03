@@ -56,9 +56,9 @@ const App: React.FC = () => {
 				<header className="mb-12 border-b-4 border-black pb-8">
 					<div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
 						<div>
-							<h1 className="text-4xl md:text-6xl font-display font-black tracking-tighter uppercase mb-2">
+							<h1 className="text-5xl md:text-6xl font-display font-black tracking-tighter uppercase mb-2">
 								SALARIO{" "}
-								<span className="text-neon-green bg-black px-2">IT_2026</span>
+								<span className="text-neon-green bg-black px-2 max-sm:text-center">IT_2026</span>
 							</h1>
 							<p className="font-bold text-sm bg-white border-2 border-black inline-block px-3 py-1 shadow-hard-sm">
 								DECRETO 1469 DE 2025 {"// "} RES. DIAN 2026
@@ -208,7 +208,9 @@ const App: React.FC = () => {
 								</div>
 							)}
 						</div>
-						<AuthorCard />
+						<div className="hidden lg:block">
+							<AuthorCard />
+						</div>
 					</div>
 
 					{/* Results */}
@@ -338,6 +340,10 @@ const App: React.FC = () => {
 							<FinancialPlan netIncome={result.nomina.netMonthly} />
 						</div>
 					)}
+
+						<div className="md:block lg:hidden">
+							<AuthorCard />
+						</div>
 
 				</div>
 			</div>
